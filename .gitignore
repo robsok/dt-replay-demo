@@ -1,0 +1,38 @@
+# .gitignore
+cat > .gitignore <<'EOF'
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Tools / env
+.env
+uv.lock
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Data (keep directory, ignore raw CSVs)
+data/*
+!data/.gitkeep
+
+# Streamlit artifacts
+.streamlit/
+EOF
+
+# Keep data/ tracked but empty
+touch data/.gitkeep
+
+# (Optional but nice) normalize line endings
+cat > .gitattributes <<'EOF'
+* text=auto
+EOF

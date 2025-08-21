@@ -1,0 +1,8 @@
+pandas>=2.2
+aiomqtt>=1.0
+pyyaml>=6.0
+python-dateutil>=2.9
+
+
+streamlit>=1.36
+plotly>=5.22

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dt-replay-twin"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.2",
+  "simpy>=4.1",
+  "paho-mqtt>=2.1",
+]
+
+# Treat these single-file modules as the project
+[tool.setuptools]
+py-modules = ["models", "twin", "publisher"]
+
+# Optional: nice CLI commands
+[project.scripts]
+dt-twin = "twin:main"
+dt-publish = "publisher:main"

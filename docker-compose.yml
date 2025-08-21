@@ -1,0 +1,9 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"   # MQTT
+      - "9001:9001"   # WebSockets (unused here)
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro

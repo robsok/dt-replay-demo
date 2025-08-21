@@ -1,0 +1,58 @@
+speed: 12000          # 120× faster than real time
+start: 2025-01-22T00:00:00 # e.g. "2024-03-01T00:00:00"
+end:   2025-08-01T00:00:00 # e.g. "2024-03-02T00:00:00"
+
+broker:
+  host: "localhost"
+  port: 1883
+  username: null
+  password: null
+  qos: 0
+  retain: false
+
+streams:
+  - id: "weights"
+    csv: "data/weights.csv"
+    topic: "lab/weights"
+    time_col: "created_at"
+    time_fmt: null                # set to "%Y-%m-%d %H:%M:%S" if not ISO
+    tz: "Australia/Sydney"        # interpret created_at in this tz, then convert to UTC
+    schema:
+      rename:
+        measurement_id: "id"      # standardise for the demo dashboard
+        weight_g: "value"         # plotted as the primary numeric
+      types:
+        id: "str"
+        particle_id: "str"
+        ore_type: "str"
+        rm_number: "str"
+        density_bin: "str"
+        density_bin_g_per_cm3: "float"
+        operator: "str"
+        value: "float"
+        machine: "str"
+        valid: "str"              # flip to "bool" if your CSV has true/false
+    drop_na_time: true
+
+  - id: "photos"
+    csv: "data/photos.csv"
+    topic: "lab/photos"
+    time_col: "created_at"
+    time_fmt: null
+    tz: "Australia/Sydney"
+    schema:
+      rename:
+        id: "id"                  # already 'id', but keeps consistency if headers change
+        num_photos: "value"       # use photo count as the primary numeric
+      types:
+        id: "str"
+        particle_id: "str"
+        ore_type: "str"
+        rm_number: "str"
+        density_bin: "str"
+        series_id: "str"
+        camera_displacement_mm: "float"
+        value: "int"
+        valid: "str"
+        photo_url: "str"
+    drop_na_time: true
