@@ -21,10 +21,6 @@ uv.lock
 .idea/
 .vscode/
 
-# Data (keep directory, ignore raw CSVs)
-data/*
-!data/.gitkeep
-
 # Streamlit artifacts
 .streamlit/
 EOF

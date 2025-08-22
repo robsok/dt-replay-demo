@@ -120,12 +120,29 @@ async def merged_events(cfg: AppCfg) -> AsyncIterator[Tuple[pd.Timestamp, str, D
             pass
 
     if not heaps:
+        print("[scheduler] No events to replay")
         return
 
-    # pacing controls
+    # Find earliest and latest timestamps across all streams
     sim_start_ts = heaps[0][0]  # earliest event timestamp
+    
+    # Find the latest timestamp by looking at the last event in each stream
+    latest_ts = sim_start_ts
+    for s, df in frames:
+        df = _clip(df, start, end)
+        if not df.empty:
+            stream_latest = df["_ts"].max()
+            if stream_latest > latest_ts:
+                latest_ts = stream_latest
+    
+    print(f"[scheduler] Replaying events from {sim_start_ts} to {latest_ts}")
+    print(f"[scheduler] Time span: {(latest_ts - sim_start_ts).total_seconds():.0f} seconds ({(latest_ts - sim_start_ts).days} days)")
+    print(f"[scheduler] Speed: {cfg.speed}x (will take ~{(latest_ts - sim_start_ts).total_seconds() / cfg.speed:.1f} seconds)")
+
+    # pacing controls
     wall_start = time.perf_counter()
     speed = max(0.0001, float(cfg.speed))  # avoid zero or negative
+    prev_ts = sim_start_ts  # track previous event timestamp for gap detection
 
     while heaps:
         ts, stream_id, _, it, row = heapq.heappop(heaps)
@@ -134,8 +151,20 @@ async def merged_events(cfg: AppCfg) -> AsyncIterator[Tuple[pd.Timestamp, str, D
         sim_delta = (ts - sim_start_ts).total_seconds()
         target_wall = wall_start + sim_delta / speed
         now = time.perf_counter()
-        if target_wall > now:
-            await asyncio.sleep(target_wall - now)
+        sleep_time = target_wall - now
+        
+        # Cap maximum wait time to 2 seconds to skip large gaps
+        # Calculate actual gap between consecutive events
+        event_gap = (ts - prev_ts).total_seconds()
+        if sleep_time > 2:
+            print(f"[scheduler] Large gap detected: {event_gap:.1f}s between events, capping wait at 2s")
+            sleep_time = 2
+            
+        if sleep_time > 0:
+            await asyncio.sleep(sleep_time)
+        
+        # Update previous timestamp for next iteration
+        prev_ts = ts
 
         # emit event (exclude internal column)
         payload = {k: (None if k == "_ts" else v) for k, v in row.items() if k != "_ts"}
@@ -147,3 +176,5 @@ async def merged_events(cfg: AppCfg) -> AsyncIterator[Tuple[pd.Timestamp, str, D
             heapq.heappush(heaps, (row2["_ts"], stream_id, next(tie), it, row2))
         except StopIteration:
             pass
+    
+    print("[scheduler] Done - all events replayed")
