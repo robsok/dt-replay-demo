@@ -23,6 +23,10 @@ class StreamCfg:
     tz: Optional[str] = None
     schema: Dict[str, Any] = None
     drop_na_time: bool = True
+    entity_id_col: Optional[str] = None
+    keep_cols: Optional[List[str]] = None
+    drop_cols: Optional[List[str]] = None
+    filter: Optional[str] = None
 
 @dataclass
 class AppCfg:

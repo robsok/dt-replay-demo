@@ -1,0 +1,32 @@
+[project]
+name = "dt-replay-demo"
+version = "0.1.0"
+description = "Event-replay publisher for lab digital twin demos (CSV -> event streams)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Your Name" }]
+license = { text = "Proprietary" }   # or: license = { file = "LICENSE" }
+
+dependencies = [
+  "aiomqtt>=2.4.0",
+  "paho-mqtt>=2.1.0",
+  "pandas>=2.2",
+  "python-dateutil>=2.8",
+  "pytz>=2024.1",
+  "PyYAML>=6.0",
+  "streamlit>=1.48.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "ipykernel>=6.29"]
+
+[project.scripts]
+replay-run = "replay.run:main"
+
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = { include = ["replay*"], exclude = ["config*", "data*", "dashboard*"] } }
+include-package-data = true

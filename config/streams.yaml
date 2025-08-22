@@ -1,12 +1,10 @@
-speed: 12000          # 120× faster than real time
-start: 2025-01-22T00:00:00 # e.g. "2024-03-01T00:00:00"
-end:   2025-08-01T00:00:00 # e.g. "2024-03-02T00:00:00"
+speed: 1200          # 120× faster than real time
+start: 2025-01-22T00:00:00  # e.g. "2024-03-01T00:00:00"
+end:   2025-08-01T00:00:00  # e.g. "2024-03-02T00:00:00"
 
 broker:
   host: "localhost"
   port: 1883
-  username: null
-  password: null
   qos: 0
   retain: false
 
@@ -14,45 +12,123 @@ streams:
   - id: "weights"
     csv: "data/weights.csv"
     topic: "lab/weights"
+#    stream_id: "lab_weights"
     time_col: "created_at"
-    time_fmt: null                # set to "%Y-%m-%d %H:%M:%S" if not ISO
-    tz: "Australia/Sydney"        # interpret created_at in this tz, then convert to UTC
+    tz: "Australia/Sydney"
+    entity_id_col: "particle_id"
     schema:
       rename:
-        measurement_id: "id"      # standardise for the demo dashboard
-        weight_g: "value"         # plotted as the primary numeric
+        measurement_id: "id"
+        weight_g: "value"
       types:
         id: "str"
         particle_id: "str"
-        ore_type: "str"
-        rm_number: "str"
-        density_bin: "str"
-        density_bin_g_per_cm3: "float"
-        operator: "str"
         value: "float"
+        valid: "str"
         machine: "str"
-        valid: "str"              # flip to "bool" if your CSV has true/false
-    drop_na_time: true
+    keep_cols: ["id","particle_id","ore_type","rm_number","density_bin","value","machine","valid"]
 
   - id: "photos"
     csv: "data/photos.csv"
     topic: "lab/photos"
+#    stream_id: "lab_photos"
     time_col: "created_at"
-    time_fmt: null
     tz: "Australia/Sydney"
+    entity_id_col: "particle_id"
     schema:
       rename:
-        id: "id"                  # already 'id', but keeps consistency if headers change
-        num_photos: "value"       # use photo count as the primary numeric
+        id:  "id"
+        num_photos: "value"
+      types:
+        id: "str"
+        particle_id: "str"
+        value: "int"
+        valid: "str"
+        photo_url: "str"
+    drop_cols: ["photo_url"]      # keep payloads small for the dashboard
+    filter: "valid == 'true'"
+
+  - id: "properties"
+    csv: "data/properties.csv"
+    topic: "lab/properties"
+#    stream_id: "lab_properties"
+    time_col: "created_at"
+    tz: "Australia/Sydney"
+    entity_id_col: "particle_id"
+    schema:
+      rename:
+        id: "id"
       types:
         id: "str"
         particle_id: "str"
         ore_type: "str"
         rm_number: "str"
         density_bin: "str"
-        series_id: "str"
-        camera_displacement_mm: "float"
-        value: "int"
+
+  - id: "magnetics"
+    csv: "data/magnetics.csv"
+    topic: "lab/magnetics"
+#    stream_id: "lab_magnetics"
+    time_col: "created_at"
+    tz: "Australia/Sydney"
+    entity_id_col: "particle_id"
+    schema:
+      rename:
+        id: "id"
+        magnetic_susceptibility: "value"
+      types:
+        id: "str"
+        particle_id: "str"
+        value: "float"
         valid: "str"
-        photo_url: "str"
-    drop_na_time: true
+
+  - id: "packs"
+    csv: "data/packs.csv"
+    topic: "lab/packs"
+#    stream_id: "lab_packs"
+    time_col: "created_at"
+    tz: "Australia/Sydney"
+    entity_id_col: "particle_id"
+    schema:
+      rename:
+        id: "id"
+        pack_no: "pack_id"
+      types:
+        id: "str"
+        particle_id: "str"
+        pack_id: "str"
+        valid: "str"
+    filter: "valid != 'false'"
+
+  - id: "density_volume"
+    csv: "data/density_volume.csv"
+    topic: "lab/density_volume"
+#    stream_id: "lab_density_volume"
+    time_col: "created_at"
+    tz: "Australia/Sydney"
+    entity_id_col: "particle_id"
+    schema:
+      rename:
+        id: "id"
+        density_g_per_cm3: "value"
+      types:
+        id: "str"
+        particle_id: "str"
+        value: "float"
+        density_bin_g_per_cm3: "float"
+
+#  - id: "ct_image_data"
+#    csv: "data/ct_image_data.csv"
+#    topic: "lab/ct_image_data"
+#    stream_id: "lab_ct_image_data"
+#    time_col: "created_at"
+#    tz: "Australia/Sydney"
+#    entity_id_col: "particle_id"
+#    schema:
+#      rename:
+#        id: "id"
+#      types:
+#        id: "str"
+#        particle_id: "str"
+#        series_id: "str"
+#        valid: "str"

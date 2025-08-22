@@ -1,80 +1,67 @@
-import json, threading, queue, time
-import streamlit as st
-from paho.mqtt import client as mqtt
+# dashboard/app.py
+import os, json, time, threading, queue
 import pandas as pd
+import streamlit as st
+import paho.mqtt.client as mqtt
 
-EVENTS = queue.Queue()
+MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_TOPIC = os.getenv("MQTT_TOPIC", "dt/#")
+MAX_ROWS = 2000  # cap to avoid unbounded growth
 
-def on_msg(_cli, _ud, msg):
-    try:
-        EVENTS.put_nowait((msg.topic, json.loads(msg.payload.decode())))
-    except Exception:
-        pass
+st.set_page_config(page_title="Lab Twin Dashboard", layout="wide")
+st.title("Lab Digital Twin — Live Events")
+st.caption(f"Broker: {MQTT_HOST}:{MQTT_PORT}  •  Topic: {MQTT_TOPIC}")
 
-def start_mqtt(host="localhost", port=1883, topics=("lab/+",)):
-    cli = mqtt.Client()
-    cli.on_message = on_msg
-    cli.connect(host, port, keepalive=30)
-    for t in topics:
-        cli.subscribe(t)
-    threading.Thread(target=cli.loop_forever, daemon=True).start()
+# Initialise state exactly once
+if "q" not in st.session_state:
+    st.session_state.q = queue.Queue()
+    st.session_state.rows = []
 
-st.set_page_config(page_title="Lab Replay Monitor", layout="wide")
-st.title("Lab Replay Monitor")
+    # paho-mqtt v2 callback API (avoids deprecation warning)
+    # If you’re on an older paho, drop the callback_api_version kwarg.
+    client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 
-if "df" not in st.session_state:
-    st.session_state.df = pd.DataFrame(columns=["ts","stream","topic","id","value"])
+    def on_connect(client, userdata, flags, reason_code, properties):
+        # v2 signature: reason_code replaces rc
+        client.subscribe(MQTT_TOPIC)
 
-col1, col2, col3 = st.columns(3)
-speed = col1.metric("Sim speed (×)", "—")
-throughput = col2.metric("Events / min", "—")
-unique_streams = col3.metric("Streams", "—")
+    def on_message(client, userdata, msg):
+        try:
+            payload = json.loads(msg.payload.decode("utf-8"))
+        except Exception:
+            payload = {"payload": msg.payload.decode("utf-8", errors="ignore")}
+        st.session_state.q.put({
+            "recv_ts": time.time(),
+            "topic": msg.topic,
+            **(payload if isinstance(payload, dict) else {"payload": payload}),
+        })
 
-with st.sidebar:
-    st.header("Connection")
-    host = st.text_input("MQTT host", "localhost")
-    port = st.number_input("MQTT port", 1883)
-    if st.button("Connect", type="primary"):
-        start_mqtt(host, int(port))
+    client.on_connect = on_connect
+    client.on_message = on_message
 
-placeholder = st.empty()
-last_count = 0
-last_time = time.time()
+    def run_mqtt():
+        client.connect(MQTT_HOST, MQTT_PORT, 60)
+        client.loop_forever()
 
-while True:
-    # drain queue
-    drained = 0
-    while not EVENTS.empty():
-        topic, msg = EVENTS.get()
-        drained += 1
-        ts = pd.to_datetime(msg.get("ts"))
-        stream = msg.get("stream")
-        data = msg.get("data", {})
-        st.session_state.df.loc[len(st.session_state.df)] = [
-            ts, stream, topic, data.get("id"), data.get("value")
-        ]
+    threading.Thread(target=run_mqtt, daemon=True).start()
 
-    # KPIs
-    now = time.time()
-    dt = now - last_time
-    if dt >= 2.0:
-        curr_count = len(st.session_state.df)
-        ev_per_min = (curr_count - last_count) / dt * 60.0
-        throughput = ev_per_min
-        last_time = now; last_count = curr_count
-        unique = st.session_state.df["stream"].nunique()
-        col2.metric("Events / min", f"{ev_per_min:,.0f}")
-        col3.metric("Streams", f"{unique}")
+# Drain any queued messages into our table
+while not st.session_state.q.empty():
+    st.session_state.rows.append(st.session_state.q.get())
+    if len(st.session_state.rows) > MAX_ROWS:
+        st.session_state.rows = st.session_state.rows[-MAX_ROWS:]
 
-    # timeline plot (last N minutes)
-    df = st.session_state.df.sort_values("ts")
-    if not df.empty:
-        recent = df[df["ts"] >= (pd.Timestamp.utcnow().tz_localize("UTC") - pd.Timedelta(minutes=10))]
-        placeholder.altair_chart(
-            (recent.assign(t=lambda d: d["ts"].dt.tz_convert("UTC"))
-                   .pipe(lambda d: __import__("altair").Chart(d)
-                         .mark_point()
-                         .encode(x="t:T", y="stream:N", color="stream:N", tooltip=["topic","id","value","t"]))),
-            use_container_width=True
-        )
-    time.sleep(0.25)
+# Display
+df = pd.DataFrame(st.session_state.rows)
+if not df.empty:
+    df["recv_time"] = pd.to_datetime(df["recv_ts"], unit="s")
+    st.dataframe(df.sort_values("recv_ts", ascending=False), use_container_width=True, height=600)
+else:
+    st.info("Waiting for events…")
+
+# Lightweight auto-refresh (~1s)
+# New API in modern Streamlit:
+st.query_params["t"] = str(time.time())
+time.sleep(1)
+st.rerun()
