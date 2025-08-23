@@ -1,0 +1,16 @@
+id,created_at,operator,severity,text
+E001,2025-01-22T08:00:00+11:00,System,info,Lab operations started - shift beginning
+E002,2025-01-22T09:15:00+11:00,Tereza Zavodna,info,Batch RM43971 sample prep initiated
+E003,2025-01-24T10:30:00+11:00,System,warning,Scale calibration due in 2 days
+E004,2025-01-24T15:45:00+11:00,Tereza Zavodna,info,100 weight measurements completed
+E005,2025-01-25T14:20:00+11:00,System,info,Weekend processing pause scheduled
+E006,2025-01-28T08:30:00+11:00,Indiana Veal,info,Monday operations resumed - new operator shift
+E007,2025-01-28T10:15:00+11:00,Indiana Veal,warning,Density measurements showing higher variance
+E008,2025-01-30T16:45:00+11:00,System,info,500 samples processed milestone reached
+E009,2025-02-03T11:30:00+11:00,System,error,Magnetic susceptibility sensor offline - maintenance required
+E010,2025-02-03T14:00:00+11:00,Maintenance Team,info,Magnetic sensor maintenance completed
+E011,2025-02-05T09:00:00+11:00,Lab Manager,info,Quality control audit - all systems operational
+E012,2025-02-10T13:20:00+11:00,System,warning,Photo capture rate below normal - check lighting
+E013,2025-02-15T16:00:00+11:00,System,info,Weekly equipment status report generated
+E014,2025-02-20T10:30:00+11:00,System,critical,Power outage detected - UPS engaged
+E015,2025-02-20T10:35:00+11:00,System,info,Power restored - operations resuming

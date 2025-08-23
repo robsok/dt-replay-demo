@@ -1,0 +1,42 @@
+swimlanes:
+  - name: "Events"
+    streams: ["events"]
+    color: "#FFA500"
+    order: 1
+    description: "Operational events and system notifications"
+
+  - name: "External Material Properties"
+    streams: ["properties"]
+    color: "#45B7D1"
+    order: 2
+    description: "Provided: Ore type, density bin, and material classification"
+  
+  - name: "360 Photo Capture"
+    streams: ["photos"]
+    color: "#FF9FF3"
+    order: 3
+    description: "Sample photography and imaging"
+
+  - name: "Weight Measurements"
+    streams: ["weights"]
+    color: "#FF6B6B"
+    order: 4
+    description: "Sample weight measurements from laboratory scales"
+
+  - name: "Density & Volume"
+    streams: ["density_volume"]
+    color: "#FECA57"
+    order: 5
+    description: "Density and volume measurements"
+
+  - name: "Tubes Imaging"  
+    streams: ["packs"]
+    color: "#4ECDC4"
+    order: 6
+    description: "Imaging tubes of particles"
+
+  - name: "Magnetic Analysis"
+    streams: ["magnetics"]
+    color: "#96CEB4"
+    order: 7
+    description: "Magnetic susceptibility measurements"

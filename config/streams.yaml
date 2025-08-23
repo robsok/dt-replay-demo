@@ -9,6 +9,18 @@ broker:
   retain: false
 
 streams:
+  - id: "events"
+    csv: "data/events.csv"
+    topic: "lab/events"
+    time_col: "created_at"
+    tz: "Australia/Sydney"
+    schema:
+      types:
+        id: "str"
+        operator: "str"
+        severity: "str"
+        text: "str"
+
   - id: "weights"
     csv: "data/weights.csv"
     topic: "lab/weights"

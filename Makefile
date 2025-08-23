@@ -1,4 +1,4 @@
-.PHONY: broker broker-ws stop pub dash
+.PHONY: broker broker-ws stop pub dash health-check mqtt-status
 
 broker:
 	docker run --name mosquitto -p 1883:1883 -d eclipse-mosquitto
@@ -16,3 +16,9 @@ pub:
 
 dash:
 	MQTT_HOST=localhost MQTT_PORT=1883 MQTT_TOPIC="lab/#" uv run streamlit run dashboard/app.py --server.port 8501
+
+health-check:
+	uv run python scripts/mqtt_health_check.py
+
+mqtt-status:
+	uv run python scripts/check_mqtt_status.py
