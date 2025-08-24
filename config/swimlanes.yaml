@@ -1,5 +1,5 @@
 swimlanes:
-  - name: "Events"
+  - name: "Messages"
     streams: ["events"]
     color: "#FFA500"
     order: 1

@@ -21,3 +21,12 @@ E019,RT-XRM43971,2025-05-01T10:35:00+11:00,System,info,New month May
 E020,RT-XRM43971,2025-06-01T10:35:00+11:00,System,info,New month June
 E021,RT-XRM43971,2025-07-01T10:35:00+11:00,System,info,New month July
 E022,RT-XRM43971,2025-08-01T10:35:00+11:00,System,info,New month August
+E101,RM44125,2025-02-15T08:00:00+08:00,System,info,Karratha lab operations initiated
+E102,RM44125,2025-02-15T09:30:00+08:00,Indiana Veal,info,RM44125 hematite sample prep started
+E103,RM44125,2025-02-16T14:20:00+08:00,System,warning,High-grade hematite density variance detected
+E104,RM44125,2025-02-18T10:15:00+08:00,Indiana Veal,info,200 hematite samples processed
+E105,RM44125,2025-02-20T11:45:00+08:00,System,info,Magnetic separation calibration completed
+E201,RM43875,2025-01-10T07:30:00+08:00,System,info,Newman Hub magnetite study commenced
+E202,RM43875,2025-01-12T14:30:00+08:00,System,info,Magnetic susceptibility analyzer calibrated
+E203,RM43875,2025-01-15T16:20:00+08:00,Robert Sok,warning,Unusual magnetite readings in batch 5
+E204,RM43875,2025-01-30T17:00:00+08:00,System,info,Final batch processing complete
