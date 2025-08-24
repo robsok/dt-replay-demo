@@ -148,27 +148,31 @@ def load_data_from_influxdb(project_id=None):
 # Initialize Dash app with different name
 app = dash.Dash(__name__, title="Lab Digital Twin Dashboard Clean")
 
+# CSS will be automatically loaded from assets/ folder
+
 # Clean layout with project tabs
 app.layout = html.Div([
-    html.H1("Lab Digital Twin — Multi-Project Dashboard", style={'textAlign': 'center', 'color': 'white'}),
-    html.P(f"Broker: {MQTT_HOST}:{MQTT_PORT} • Topic: {MQTT_TOPIC}", 
-           style={'textAlign': 'center', 'color': 'gray'}),
+    # Header section with improved styling
+    html.Div([
+        html.H1("Lab Digital Twin — Multi-Project Dashboard", className="dashboard-title"),
+        html.P(f"Broker: {MQTT_HOST}:{MQTT_PORT} • Topic: {MQTT_TOPIC}", className="dashboard-subtitle")
+    ], className="dashboard-header"),
     
     # Project navigation tabs
-    dcc.Tabs(
-        id="project-tabs",
-        value=None,
-        children=[],  # Will be populated by callback
-        style={
-            'fontFamily': 'Arial',
-            'color': 'white'
-        },
-        colors={
-            "border": "white",
-            "primary": "#4ECDC4",
-            "background": "#2d3748"
-        }
-    ),
+    html.Div([
+        dcc.Tabs(
+            id="project-tabs",
+            value=None,
+            children=[],  # Will be populated by callback
+            className="tab-content",
+            parent_className="tab-parent",
+            colors={
+                "border": "#4a5568",
+                "primary": "#4ECDC4",
+                "background": "#2d3748"
+            }
+        )
+    ], className="tab-container"),
     
     # Auto-refresh interval
     dcc.Interval(
@@ -177,7 +181,7 @@ app.layout = html.Div([
         n_intervals=0
     ),
     
-], style={'backgroundColor': '#1a202c', 'minHeight': '100vh', 'padding': '20px'})
+], id="app-container")
 
 # Project tabs population callback (only run once on startup)
 @app.callback(
@@ -207,21 +211,11 @@ def update_project_tabs(n):
                 html.Div([
                     html.Span(f"Project Lead: {project['project_lead']}", style={'color': 'lightgray', 'marginRight': '15px', 'fontSize': '12px'}),
                     html.Span(f"Location: {project['location']}", style={'color': 'lightgray', 'marginRight': '15px', 'fontSize': '12px'}),
-                    html.Span(f"Status: ", style={'color': 'white', 'fontSize': '12px'}),
-                    html.Span(project['status'].upper(), style={
-                        'color': 'green' if project['status'] == 'active' else 'blue' if project['status'] == 'completed' else 'orange',
-                        'fontWeight': 'bold',
-                        'fontSize': '12px'
-                    }),
+                    html.Span("Status: ", style={'color': 'white', 'fontSize': '12px'}),
+                    html.Span(project['status'].upper(), className=f"status-{'active' if project['status'] == 'active' else 'warning'}", style={'fontSize': '12px'}),
                 ], style={'margin': '5px'}),
                 html.P(project['description'], style={'color': 'lightblue', 'fontStyle': 'italic', 'margin': '5px', 'fontSize': '11px'})
-            ], style={
-                'backgroundColor': 'rgba(45, 55, 72, 0.6)',
-                'padding': '10px',
-                'borderRadius': '5px',
-                'margin': '10px 0px',
-                'textAlign': 'center'
-            }),
+            ], className="project-info"),
             
             # Full dashboard for this specific project
             html.Div([
@@ -231,7 +225,7 @@ def update_project_tabs(n):
                 # Controls
                 html.Div([
                     html.Div([
-                        html.Label("Zoom Level:", style={'color': 'white', 'marginRight': '10px'}),
+                        html.Label("Zoom Level:", style={'color': 'white', 'marginRight': '10px', 'display': 'block', 'marginBottom': '5px'}),
                         dcc.Dropdown(
                             id=f"zoom-dropdown-{project['id']}",
                             options=[
@@ -241,9 +235,10 @@ def update_project_tabs(n):
                                 {'label': 'Year', 'value': 'Year'}
                             ],
                             value='Week',
-                            style={'width': '150px', 'display': 'inline-block'}
+                            className='dash-dropdown',
+                            style={'width': '150px', 'minHeight': '38px'}
                         )
-                    ], style={'display': 'inline-block', 'marginRight': '20px'}),
+                    ], style={'display': 'inline-block', 'marginRight': '20px', 'verticalAlign': 'top'}),
                     
                     html.Div([
                         dcc.Checklist(
@@ -254,20 +249,22 @@ def update_project_tabs(n):
                         )
                     ], style={'display': 'inline-block', 'marginRight': '20px'}),
                     
-                    html.Button("← Previous", id=f"prev-button-{project['id']}", n_clicks=0, style={'marginRight': '10px'}),
-                    html.Button("Next →", id=f"next-button-{project['id']}", n_clicks=0, style={'marginRight': '10px'}),
-                    html.Button("Jump to Latest", id=f"latest-button-{project['id']}", n_clicks=0),
+                    html.Button("← Previous", id=f"prev-button-{project['id']}", n_clicks=0, className="nav-button"),
+                    html.Button("Next →", id=f"next-button-{project['id']}", n_clicks=0, className="nav-button"),
+                    html.Button("Jump to Latest", id=f"latest-button-{project['id']}", n_clicks=0, className="nav-button"),
                     
-                ], style={'textAlign': 'center', 'margin': '20px'}),
+                ], className="controls-panel"),
                 
                 # Event counters
                 html.Div(id=f"counters-{project['id']}", style={'margin': '20px'}),
                 
                 # Timeline graph
-                dcc.Graph(id=f"timeline-{project['id']}"),
+                html.Div([
+                    dcc.Graph(id=f"timeline-{project['id']}")
+                ], className="timeline-container"),
                 
                 # Recent events table
-                html.H3("Recent Events", style={'color': 'white', 'textAlign': 'center', 'marginTop': '30px'}),
+                html.H3("Recent Events", className="section-title"),
                 html.Div(id=f"events-{project['id']}"),
                 
                 # Timeline offset store for this project
@@ -373,34 +370,25 @@ def create_project_callbacks():
                     swimlane_count = sum(stream_counts.get(stream, 0) for stream in swimlane['streams'])
                     
                     counter_div = html.Div([
-                        html.H4(swimlane['name'], style={'margin': '0', 'color': 'white'}),
-                        html.P(str(swimlane_count), 
-                               style={'margin': '0', 'fontSize': '24px', 'color': swimlane['color'], 'fontWeight': 'bold'})
-                    ], style={
-                        'textAlign': 'center',
-                        'backgroundColor': '#2d3748',
-                        'padding': '15px',
-                        'borderRadius': '8px',
-                        'margin': '10px',
+                        html.H4(swimlane['name'], className="counter-title"),
+                        html.P(str(swimlane_count), className="counter-value", style={'color': swimlane['color']})
+                    ], className="counter-card", style={
+                        'border': f'1px solid {swimlane["color"]}',
                         'display': 'inline-block',
-                        'minWidth': '150px',
-                        'border': f'2px solid {swimlane["color"]}',
-                        'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.3)'
+                        'minWidth': '75px',
+                        'textAlign': 'center'
                     })
                     counter_divs.append(counter_div)
                 
                 # Add total
                 total_div = html.Div([
-                    html.H4("Total Events", style={'margin': '0', 'color': 'white'}),
-                    html.P(str(len(df)), style={'margin': '0', 'fontSize': '24px', 'color': '#4ECDC4'})
-                ], style={
-                    'textAlign': 'center',
-                    'backgroundColor': '#2d3748',
-                    'padding': '10px',
-                    'borderRadius': '5px',
-                    'margin': '5px',
+                    html.H4("Total Events", className="counter-title"),
+                    html.P(str(len(df)), className="counter-value", style={'color': '#4ECDC4'})
+                ], className="counter-card", style={
+                    'border': '1px solid #4ECDC4',
                     'display': 'inline-block',
-                    'minWidth': '120px'
+                    'minWidth': '75px',
+                    'textAlign': 'center'
                 })
                 counter_divs.append(total_div)
                 
@@ -509,13 +497,13 @@ def create_project_callbacks():
                 return html.Table([
                     html.Thead([
                         html.Tr([
-                            html.Th("Time", style={'color': 'white', 'padding': '10px'}),
-                            html.Th("Stream", style={'color': 'white', 'padding': '10px'}),
-                            html.Th("Content", style={'color': 'white', 'padding': '10px'})
+                            html.Th("Time"),
+                            html.Th("Stream"),
+                            html.Th("Content")
                         ])
                     ]),
                     html.Tbody(table_data)
-                ], style={'width': '100%', 'border': '1px solid gray'})
+                ], className="events-table", style={'width': '100%'})
                 
             except Exception as e:
                 return html.P(f"Error loading events for {pid}: {str(e)}", 
@@ -545,6 +533,50 @@ def create_project_callbacks():
                 return 0
             
             return current_offset or 0
+
+# Helper function to get public holidays for a given year
+def get_public_holidays(year):
+    """
+    Returns a set of public holiday dates for the given year.
+    Currently configured for Australian public holidays.
+    You can customize this based on your location.
+    """
+    from datetime import date
+    
+    holidays = set()
+    
+    # Fixed date holidays
+    holidays.add(date(year, 1, 1))   # New Year's Day
+    holidays.add(date(year, 1, 26))  # Australia Day
+    holidays.add(date(year, 4, 25))  # ANZAC Day
+    holidays.add(date(year, 12, 25)) # Christmas Day
+    holidays.add(date(year, 12, 26)) # Boxing Day
+    
+    # Easter-based holidays (simplified calculation)
+    try:
+        # Simple Easter calculation (approximate)
+        # For more accuracy, you could use a library like `holidays`
+        import calendar
+        
+        # Queen's Birthday (second Monday in June in most Australian states)
+        june_first = date(year, 6, 1)
+        june_first_weekday = june_first.weekday()
+        days_to_second_monday = (7 - june_first_weekday) % 7 + 7
+        queens_birthday = date(year, 6, 1 + days_to_second_monday)
+        holidays.add(queens_birthday)
+        
+        # Labour Day varies by state - using first Monday in March (WA)
+        march_first = date(year, 3, 1)
+        march_first_weekday = march_first.weekday()
+        days_to_first_monday = (7 - march_first_weekday) % 7
+        labour_day = date(year, 3, 1 + days_to_first_monday)
+        holidays.add(labour_day)
+        
+    except:
+        # If calculation fails, just skip the calculated holidays
+        pass
+    
+    return holidays
 
 # Internal timeline function (extracted from callback to reuse logic)
 def update_timeline_internal(rows, zoom_level, timeline_offset, use_current_time, project_id):
@@ -682,6 +714,59 @@ def update_timeline_internal(rows, zoom_level, timeline_offset, use_current_time
                 row=i, col=1
             )
             
+            # Add swimlane background and weekend/holiday shading
+            if dates and len(dates) > 0:
+                hex_color = swimlane['color'].lstrip('#')
+                r, g, b = tuple(int(hex_color[j:j+2], 16) for j in (0, 2, 4))
+                y_max = max_count * 1.5 if max_count > 0 else 1
+                
+                # Use original date boundaries (not shifted) for background shapes
+                original_dates = [pd.Timestamp(date) for date in all_dates]
+                
+                # Add swimlane background
+                fig.add_shape(
+                    type="rect",
+                    x0=original_dates[0], x1=original_dates[-1] + pd.Timedelta(days=1),
+                    y0=0, y1=y_max,
+                    xref=f"x{i}", yref=f"y{i}",
+                    fillcolor=f"rgba({r},{g},{b},0.08)",
+                    line=dict(color=f"rgba({r},{g},{b},0.4)", width=1),
+                    layer="below",
+                    row=i, col=1
+                )
+                
+                # Weekend shading using original dates
+                for orig_date in original_dates:
+                    if orig_date.weekday() >= 5:  # Saturday (5) or Sunday (6)
+                        fig.add_shape(
+                            type="rect",
+                            x0=orig_date, x1=orig_date + pd.Timedelta(days=1),
+                            y0=0, y1=y_max,
+                            xref=f"x{i}", yref=f"y{i}",
+                            fillcolor="rgba(128,128,128,0.15)",
+                            line=dict(width=0),
+                            layer="below",
+                            row=i, col=1
+                        )
+                
+                # Public holiday shading (Australian public holidays)
+                # You can customize this list based on your location
+                public_holidays = get_public_holidays(original_dates[0].year if original_dates else pd.Timestamp.now().year)
+                
+                for orig_date in original_dates:
+                    # Check if this date is a public holiday
+                    if orig_date.date() in public_holidays:
+                        fig.add_shape(
+                            type="rect",
+                            x0=orig_date, x1=orig_date + pd.Timedelta(days=1),
+                            y0=0, y1=y_max,
+                            xref=f"x{i}", yref=f"y{i}",
+                            fillcolor="rgba(255,215,0,0.2)",  # Gold color for holidays
+                            line=dict(width=0),
+                            layer="below",
+                            row=i, col=1
+                        )
+            
             # Add right-side label
             fig.add_annotation(
                 text=swimlane['name'],
@@ -709,6 +794,116 @@ def update_timeline_internal(rows, zoom_level, timeline_offset, use_current_time
                     gridwidth=1,
                     gridcolor='rgba(128,128,128,0.2)'
                 )
+            elif zoom_level == "Month":
+                # Sample original dates for less crowded display
+                sample_dates = original_dates[::3] if len(original_dates) > 10 else original_dates
+                tick_texts = []
+                for date in sample_dates:
+                    week_num = date.isocalendar()[1]
+                    year_short = date.strftime('%y')
+                    month_day = date.strftime('%b %d')
+                    tick_texts.append(f"wk {week_num} ('{year_short})<br>{month_day}")
+                
+                fig.update_xaxes(
+                    tickmode='array',
+                    tickvals=sample_dates,
+                    ticktext=tick_texts,
+                    tickfont=dict(size=9),
+                    showgrid=True,
+                    gridwidth=1,
+                    gridcolor='rgba(128,128,128,0.2)'
+                )
+            elif zoom_level == "Quarter":
+                # Show starting weeks of each month only
+                month_start_dates = []
+                month_start_texts = []
+                
+                # Group dates by month and find the first date of each month
+                seen_months = set()
+                for date in original_dates:
+                    month_key = (date.year, date.month)
+                    if month_key not in seen_months:
+                        seen_months.add(month_key)
+                        # Find the first Monday or first day of this month in our data
+                        month_dates = [d for d in original_dates if d.year == date.year and d.month == date.month]
+                        if month_dates:
+                            # Use the first date of the month in our dataset
+                            first_date = min(month_dates)
+                            month_start_dates.append(first_date)
+                            month_start_texts.append(first_date.strftime('%b %Y'))
+                
+                # If no month starts found, fall back to sampling every 2 weeks
+                if not month_start_dates:
+                    month_start_dates = original_dates[::14] if len(original_dates) > 14 else original_dates
+                    month_start_texts = [d.strftime('%b %Y') for d in month_start_dates]
+                
+                fig.update_xaxes(
+                    tickmode='array',
+                    tickvals=month_start_dates,
+                    ticktext=month_start_texts,
+                    tickfont=dict(size=9),
+                    tickangle=0,  # Horizontal
+                    showgrid=True,
+                    gridwidth=1,
+                    gridcolor='rgba(128,128,128,0.2)'
+                )
+            else:  # Year view
+                # For year view, show major month markers (quarterly or monthly depending on data size)
+                if len(original_dates) > 0:
+                    # Group by month and show first date of each month
+                    monthly_dates = []
+                    monthly_texts = []
+                    seen_months = set()
+                    
+                    for date in original_dates:
+                        month_key = (date.year, date.month)
+                        if month_key not in seen_months:
+                            seen_months.add(month_key)
+                            # Add first date of this month
+                            month_dates = [d for d in original_dates if d.year == date.year and d.month == date.month]
+                            if month_dates:
+                                first_date = min(month_dates)
+                                monthly_dates.append(first_date)
+                                monthly_texts.append(first_date.strftime('%b %Y'))
+                    
+                    # If too many months, sample every 2-3 months
+                    if len(monthly_dates) > 12:
+                        sample_dates = monthly_dates[::3]  # Every 3rd month (quarterly)
+                        tick_texts = [monthly_texts[i] for i in range(0, len(monthly_texts), 3)]
+                    elif len(monthly_dates) > 6:
+                        sample_dates = monthly_dates[::2]  # Every 2nd month
+                        tick_texts = [monthly_texts[i] for i in range(0, len(monthly_texts), 2)]
+                    else:
+                        sample_dates = monthly_dates
+                        tick_texts = monthly_texts
+                        
+                    # Fallback if no monthly data found
+                    if not sample_dates:
+                        sample_dates = original_dates[::max(1, len(original_dates)//10)]
+                        tick_texts = [date.strftime('%b %Y') for date in sample_dates]
+                else:
+                    # No dates available
+                    sample_dates = []
+                    tick_texts = []
+                
+                if sample_dates and tick_texts:
+                    fig.update_xaxes(
+                        tickmode='array',
+                        tickvals=sample_dates,
+                        ticktext=tick_texts,
+                        tickfont=dict(size=8),
+                        showgrid=True,
+                        gridwidth=1,
+                        gridcolor='rgba(128,128,128,0.2)'
+                    )
+                else:
+                    # Fallback to auto-formatting if no custom ticks
+                    fig.update_xaxes(
+                        tickfont=dict(size=8),
+                        showgrid=True,
+                        gridwidth=1,
+                        gridcolor='rgba(128,128,128,0.2)'
+                    )
         
         # Create title with time reference info
         offset_text = f" (offset: {timeline_offset})" if timeline_offset != 0 else ""

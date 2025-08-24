@@ -1,4 +1,4 @@
-speed: 5000     # Much faster for demo  
+speed: 2500     # Much faster for demo  
 start: 2025-01-22T08:00:00  # Start from beginning of data
 end:   2025-07-04T10:00:00  # End at end of data (covers ~5.5 months)
 

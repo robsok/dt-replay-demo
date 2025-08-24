@@ -1,0 +1,441 @@
+/* Digital Twin Dashboard Custom Styles */
+
+/* Global styles */
+body {
+    font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    min-height: 100vh;
+    color: #fff;
+}
+
+/* Main container */
+#app-container {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Header styling */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(45, 55, 72, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #4ECDC4, #44A08D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-subtitle {
+    color: #a0aec0;
+    font-size: 1rem;
+    margin: 10px 0 0 0;
+    opacity: 0.8;
+}
+
+/* Tab styling improvements */
+.tab-container {
+    margin-bottom: 20px;
+}
+
+/* Override Dash tab styles */
+.tab-content {
+    background-color: #2d3748 !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.tab-parent {
+    background-color: #1a202c !important;
+}
+
+/* Project info header */
+.project-info {
+    background: rgba(45, 55, 72, 0.6) !important;
+    padding: 15px !important;
+    border-radius: 8px !important;
+    margin: 15px 0 !important;
+    text-align: center !important;
+    border: 1px solid rgba(78, 205, 196, 0.2) !important;
+    backdrop-filter: blur(5px);
+}
+
+/* Control panels */
+.controls-panel {
+    background: rgba(45, 55, 72, 0.8) !important;
+    padding: 20px !important;
+    border-radius: 10px !important;
+    margin: 20px 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    text-align: center;
+    position: relative;
+    z-index: 100;
+}
+
+.controls-panel > div {
+    margin-bottom: 15px;
+}
+
+/* Make control elements stack on smaller screens */
+@media (max-width: 768px) {
+    .controls-panel > div {
+        display: block !important;
+        margin: 15px 0 !important;
+    }
+}
+
+/* Status indicators */
+.status-indicator {
+    padding: 10px 20px;
+    border-radius: 20px;
+    margin: 10px;
+    font-weight: 500;
+    display: inline-block;
+    backdrop-filter: blur(5px);
+}
+
+.status-active {
+    background: rgba(72, 187, 120, 0.2);
+    border: 1px solid #48BB78;
+    color: #68D391;
+}
+
+.status-warning {
+    background: rgba(237, 137, 54, 0.2);
+    border: 1px solid #ED8936;
+    color: #F6AD55;
+}
+
+.status-error {
+    background: rgba(245, 101, 101, 0.2);
+    border: 1px solid #F56565;
+    color: #FC8181;
+}
+
+/* Counter cards - Smaller and more compact */
+.counter-card {
+    background: rgba(45, 55, 72, 0.9) !important;
+    border-radius: 8px !important;
+    margin: 5px !important;
+    padding: 10px !important;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.counter-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+.counter-title {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    line-height: 1.2;
+}
+
+.counter-value {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    line-height: 1.2;
+}
+
+/* Buttons */
+.nav-button {
+    background: linear-gradient(45deg, #4ECDC4, #44A08D) !important;
+    border: none !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    margin: 0 5px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 10px rgba(78, 205, 196, 0.3);
+}
+
+.nav-button:hover {
+    background: linear-gradient(45deg, #44A08D, #4ECDC4) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4) !important;
+}
+
+/* Dropdown styling - Updated for newer Dash versions */
+/* Target the dropdown container */
+.dash-dropdown {
+    position: relative;
+    z-index: 9999;
+}
+
+/* Dropdown control (the main box) */
+.Select-control,
+div[data-dash-is-loading] .Select-control,
+.dropdown .Select-control {
+    background-color: #2d3748 !important;
+    border: 1px solid #4a5568 !important;
+    color: white !important;
+    min-height: 38px !important;
+    z-index: 9999 !important;
+}
+
+/* Dropdown menu container */
+.Select-menu-outer,
+.dropdown .Select-menu-outer {
+    background-color: #2d3748 !important;
+    border: 1px solid #4a5568 !important;
+    z-index: 9999 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Individual dropdown options */
+.Select-option,
+.dropdown .Select-option {
+    background-color: #2d3748 !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #4a5568;
+}
+
+.Select-option:hover,
+.dropdown .Select-option:hover,
+.Select-option.is-focused,
+.dropdown .Select-option.is-focused {
+    background-color: #4ECDC4 !important;
+    color: #1a202c !important;
+}
+
+/* Selected option styling */
+.Select-value-label,
+.dropdown .Select-value-label {
+    color: white !important;
+}
+
+/* Dropdown arrow */
+.Select-arrow-zone,
+.dropdown .Select-arrow-zone {
+    padding-right: 10px;
+}
+
+.Select-arrow,
+.dropdown .Select-arrow {
+    border-color: #4ECDC4 transparent transparent !important;
+    border-width: 6px 6px 0 !important;
+}
+
+/* When dropdown is open */
+.is-open .Select-arrow,
+.dropdown.is-open .Select-arrow {
+    border-color: transparent transparent #4ECDC4 !important;
+    border-width: 0 6px 6px !important;
+}
+
+/* Fix z-index issues */
+.controls-panel {
+    position: relative;
+    z-index: 10;
+}
+
+.controls-panel > div {
+    position: relative;
+    z-index: 10;
+}
+
+/* Additional modern Dash dropdown selectors */
+.dash-dropdown .dropdown {
+    position: relative;
+    z-index: 9999;
+}
+
+/* For React-Select components in newer Dash versions */
+.css-yk16xz-control,
+.css-1pahdxg-control {
+    background-color: #2d3748 !important;
+    border: 1px solid #4a5568 !important;
+    min-height: 38px !important;
+    box-shadow: none !important;
+}
+
+.css-1okebmr-indicatorSeparator {
+    background-color: #4a5568 !important;
+}
+
+.css-tlfecz-indicatorContainer {
+    color: #4ECDC4 !important;
+}
+
+.css-1dimb5e-singleValue {
+    color: white !important;
+}
+
+.css-26l3qy-menu {
+    background-color: #2d3748 !important;
+    border: 1px solid #4a5568 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    z-index: 9999 !important;
+}
+
+.css-d7l1ni-option {
+    background-color: #2d3748 !important;
+    color: white !important;
+    padding: 8px 12px !important;
+}
+
+.css-d7l1ni-option:hover {
+    background-color: #4ECDC4 !important;
+    color: #1a202c !important;
+}
+
+/* Ensure timeline doesn't overlap dropdown */
+.timeline-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Timeline improvements */
+.timeline-container {
+    background: rgba(45, 55, 72, 0.3);
+    border-radius: 12px;
+    padding: 10px;
+    margin: 20px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Events table */
+.events-table {
+    background: rgba(45, 55, 72, 0.8);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.events-table th {
+    background: rgba(78, 205, 196, 0.2) !important;
+    color: #4ECDC4 !important;
+    font-weight: 600 !important;
+    padding: 15px 10px !important;
+    border-bottom: 2px solid #4ECDC4 !important;
+}
+
+.events-table td {
+    padding: 12px 10px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.events-table tr:hover {
+    background: rgba(78, 205, 196, 0.1) !important;
+}
+
+/* Section titles */
+.section-title {
+    color: #4ECDC4 !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    margin: 30px 0 20px 0 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Loading states */
+.loading-spinner {
+    border: 3px solid rgba(78, 205, 196, 0.3);
+    border-top: 3px solid #4ECDC4;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 2rem;
+    }
+    
+    .counter-card {
+        min-width: 70px !important;
+        margin: 3px !important;
+        padding: 8px !important;
+    }
+    
+    .counter-title {
+        font-size: 0.7rem !important;
+    }
+    
+    .counter-value {
+        font-size: 1.2rem !important;
+    }
+    
+    .controls-panel {
+        padding: 15px !important;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a202c;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4ECDC4;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #44A08D;
+}
+
+/* Glassmorphism effect for cards */
+.glass-card {
+    background: rgba(45, 55, 72, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation for status changes */
+.status-indicator {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Focus states for accessibility */
+button:focus, 
+.Select-control:focus,
+input:focus {
+    outline: 2px solid #4ECDC4;
+    outline-offset: 2px;
+}
