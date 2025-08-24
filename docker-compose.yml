@@ -1,9 +1,54 @@
 services:
+  # MQTT Broker (updated from existing configuration)
   mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: mosquitto
+    image: eclipse-mosquitto:2.0
+    container_name: dt-mqtt-broker
     ports:
       - "1883:1883"   # MQTT
-      - "9001:9001"   # WebSockets (unused here)
+      - "9001:9001"   # WebSockets
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+    networks:
+      - dt-network
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "test", "-m", "health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # InfluxDB 2.x Time Series Database
+  influxdb:
+    image: influxdb:2.7
+    container_name: dt-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=dt-lab-admin-2025
+      - DOCKER_INFLUXDB_INIT_ORG=lab
+      - DOCKER_INFLUXDB_INIT_BUCKET=measurements
+      - DOCKER_INFLUXDB_INIT_RETENTION=0s
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=dt-lab-token-2025-secure-key-for-api-access
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    restart: unless-stopped
+    networks:
+      - dt-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+networks:
+  dt-network:
+    driver: bridge
+
+volumes:
+  influxdb_data:
+    driver: local
+  influxdb_config:
+    driver: local

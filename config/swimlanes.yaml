@@ -5,25 +5,25 @@ swimlanes:
     order: 1
     description: "Operational events and system notifications"
 
-  - name: "External Material Properties"
+  - name: "External Data"
     streams: ["properties"]
     color: "#45B7D1"
     order: 2
     description: "Provided: Ore type, density bin, and material classification"
   
-  - name: "360 Photo Capture"
+  - name: "360 Photos"
     streams: ["photos"]
     color: "#FF9FF3"
     order: 3
     description: "Sample photography and imaging"
 
-  - name: "Weight Measurements"
+  - name: "Weights"
     streams: ["weights"]
     color: "#FF6B6B"
     order: 4
     description: "Sample weight measurements from laboratory scales"
 
-  - name: "Density & Volume"
+  - name: "He-Pyc"
     streams: ["density_volume"]
     color: "#FECA57"
     order: 5
@@ -35,7 +35,7 @@ swimlanes:
     order: 6
     description: "Imaging tubes of particles"
 
-  - name: "Magnetic Analysis"
+  - name: "Magnetics"
     streams: ["magnetics"]
     color: "#96CEB4"
     order: 7

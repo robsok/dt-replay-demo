@@ -16,6 +16,8 @@ dependencies = [
   "PyYAML>=6.0",
   "streamlit>=1.48.1",
   "plotly>=5.22",
+  "influxdb-client>=1.49.0",
+  "dash>=3.2.0",
 ]
 
 [project.optional-dependencies]
