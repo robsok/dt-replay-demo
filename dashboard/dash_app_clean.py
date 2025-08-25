@@ -148,7 +148,8 @@ def load_data_from_influxdb(project_id=None):
 # Initialize Dash app with different name
 app = dash.Dash(__name__, title="Lab Digital Twin Dashboard Clean")
 
-# CSS will be automatically loaded from assets/ folder
+# CSS and JavaScript will be automatically loaded from assets/ folder
+# Files are loaded in alphabetical order: config.js, dashboard.js, styles.css, utils.js
 
 # Clean layout with project tabs
 app.layout = html.Div([
@@ -578,6 +579,121 @@ def get_public_holidays(year):
     
     return holidays
 
+def position_events_without_overlap(events_data, zoom_level):
+    """
+    Position events to prevent text overlap using smart spacing and positioning
+    """
+    if not events_data:
+        return []
+    
+    # Sort events by time
+    sorted_events = sorted(events_data, key=lambda e: e['time'])
+    positioned_events = []
+    
+    # Configuration based on zoom level
+    config = {
+        'Week': {
+            'min_time_gap_hours': 2,    # Minimum 2 hours between events for text display
+            'y_offset_step': 0.3,       # Y position step
+            'max_y_levels': 3,          # Maximum vertical levels
+            'font_size': 9,
+            'max_text_length': 25,
+            'arrow_length': 20
+        },
+        'Month': {
+            'min_time_gap_hours': 8,    # Minimum 8 hours between events
+            'y_offset_step': 0.25,
+            'max_y_levels': 4,
+            'font_size': 8,
+            'max_text_length': 20,
+            'arrow_length': 15
+        }
+    }
+    
+    current_config = config.get(zoom_level, config['Week'])
+    min_time_gap = pd.Timedelta(hours=current_config['min_time_gap_hours'])
+    
+    # Track positions to avoid overlap
+    position_tracker = []  # [(time, y_level, end_time)]
+    
+    for event in sorted_events:
+        event_time = pd.to_datetime(event['time'])
+        text = str(event['text'])[:current_config['max_text_length']]
+        
+        # Wrap text if too long
+        if len(text) > 15:
+            words = text.split()
+            wrapped_lines = []
+            current_line = ""
+            
+            for word in words:
+                test_line = f"{current_line} {word}".strip()
+                if len(test_line) <= 15:
+                    current_line = test_line
+                else:
+                    if current_line:
+                        wrapped_lines.append(current_line)
+                    current_line = word
+            
+            if current_line:
+                wrapped_lines.append(current_line)
+            
+            wrapped_text = "<br>".join(wrapped_lines[:2])  # Max 2 lines
+        else:
+            wrapped_text = text
+        
+        # Find available Y level
+        y_level = 0
+        text_duration = pd.Timedelta(minutes=len(wrapped_text) * 2)  # Estimate text duration
+        event_end_time = event_time + text_duration
+        
+        # Check for conflicts with existing positioned events
+        for existing_time, existing_level, existing_end in position_tracker:
+            time_overlap = (
+                (event_time <= existing_end and event_end_time >= existing_time)
+            )
+            if time_overlap and y_level == existing_level:
+                y_level = (y_level + 1) % current_config['max_y_levels']
+        
+        # Calculate positions
+        base_y = 0.5  # Middle of swimlane
+        y_position = base_y + (y_level * current_config['y_offset_step'])
+        if y_level % 2 == 1:  # Alternate above/below center
+            y_position = base_y - ((y_level + 1) // 2 * current_config['y_offset_step'])
+        
+        # Arrow positioning
+        arrow_x = 0
+        arrow_y = -current_config['arrow_length'] - (y_level * 5)
+        
+        # Text angle for better readability
+        angle = 0
+        if y_level > 1:
+            angle = 15 if y_level % 2 == 0 else -15
+        
+        positioned_event = {
+            'time': event['time'],
+            'text': event['text'],
+            'wrapped_text': wrapped_text,
+            'severity': event['severity'],
+            'y_position': y_position,
+            'arrow_x': arrow_x,
+            'arrow_y': arrow_y,
+            'angle': angle,
+            'font_size': current_config['font_size'],
+            'data': event['data']
+        }
+        
+        positioned_events.append(positioned_event)
+        position_tracker.append((event_time, y_level, event_end_time))
+        
+        # Clean up old entries to prevent excessive memory usage
+        cutoff_time = event_time - pd.Timedelta(hours=24)
+        position_tracker = [
+            (t, l, e) for t, l, e in position_tracker if e > cutoff_time
+        ]
+    
+    return positioned_events
+
 # Internal timeline function (extracted from callback to reuse logic)
 def update_timeline_internal(rows, zoom_level, timeline_offset, use_current_time, project_id):
     """Create timeline figure for a specific project using existing logic"""
@@ -670,40 +786,167 @@ def update_timeline_internal(rows, zoom_level, timeline_offset, use_current_time
                 font=dict(size=16, color="red")
             )
         
-        # Add bars/annotations for each swimlane (simplified version - just show bars)
+        # Add bars/annotations for each swimlane with events handling
         for i, swimlane in enumerate(measurement_swimlanes, 1):
-            swimlane_counts_by_date = {date: 0 for date in all_dates}
-            
-            for stream_type in swimlane['streams']:
-                stream_counts = daily_counts[daily_counts['stream_type'] == stream_type]
-                for _, row in stream_counts.iterrows():
-                    if row['date'] in swimlane_counts_by_date:
-                        swimlane_counts_by_date[row['date']] += row['count']
-            
-            dates = [pd.Timestamp(date) + pd.Timedelta(hours=12) for date in all_dates]
-            counts = [swimlane_counts_by_date[date] for date in all_dates]
-            max_count = max(counts) if counts else 0
-            
-            show_text = zoom_level in ['Week', 'Month']
-            text_values = None
-            if show_text:
-                text_values = [str(count) if count > 0 else '' for count in counts]
-            
-            fig.add_trace(
-                go.Bar(
-                    x=dates,
-                    y=counts,
-                    name=swimlane['name'],
-                    marker_color=swimlane['color'],
-                    opacity=0.8,
-                    text=text_values,
-                    textposition="outside" if show_text else None,
-                    textfont=dict(color="white", size=9) if show_text else None,
-                    hovertemplate=f'<b>{swimlane["name"]}</b><br>Date: %{{x}}<br>Count: %{{y}}<br>Project: {project_id}<extra></extra>',
-                    showlegend=False
-                ),
-                row=i, col=1
-            )
+            # Handle Messages swimlane differently - show text messages with smart positioning
+            if swimlane['name'] == 'Messages':
+                # Get actual event data for this swimlane
+                events_data = []
+                for stream_type in swimlane['streams']:
+                    stream_events = window_df[window_df['stream_type'] == stream_type]
+                    
+                    print(f"🔍 Total {stream_type} records: {len(stream_events)}")
+                    
+                    # With pivoted data, all event fields should be available directly
+                    for _, row in stream_events.iterrows():
+                        data_dict = row.get('data', {})
+                        
+                        # Extract event text from various possible fields
+                        event_text = (
+                            data_dict.get('text') or 
+                            data_dict.get('value') or
+                            data_dict.get('message') or
+                            data_dict.get('description') or
+                            str(list(data_dict.items())[:2]) if data_dict else
+                            'Event'
+                        )
+                        
+                        severity = data_dict.get('severity', 'info')
+                        event_time = row['recv_time']
+                        
+                        print(f"🔍 Event found - text: '{event_text}', severity: '{severity}' at {event_time}")
+                        
+                        events_data.append({
+                            'time': event_time,
+                            'text': event_text,
+                            'severity': severity,
+                            'data': data_dict
+                        })
+                
+                # Sort events by time for better positioning
+                events_data.sort(key=lambda x: x['time'])
+                
+                # Add a minimal bar to establish the timeline
+                dates = [pd.Timestamp(date) + pd.Timedelta(hours=12) for date in all_dates]
+                empty_counts = [0] * len(all_dates)
+                
+                fig.add_trace(
+                    go.Bar(
+                        x=dates,
+                        y=empty_counts,
+                        name=swimlane['name'],
+                        marker_color='rgba(0,0,0,0)',  # Invisible bars
+                        showlegend=False,
+                        hoverinfo='skip'
+                    ),
+                    row=i, col=1
+                )
+                
+                # Show text for Week/Month views, markers for Quarter/Year views
+                if zoom_level in ['Week', 'Month'] and events_data:
+                    # Smart positioning to prevent overlap
+                    positioned_events = position_events_without_overlap(events_data, zoom_level)
+                    
+                    for event in positioned_events:
+                        # Color based on severity
+                        severity_colors = {
+                            'info': swimlane['color'],
+                            'warning': '#FFA500',
+                            'error': '#FF4444',
+                            'critical': '#CC0000'
+                        }
+                        color = severity_colors.get(event['severity'], swimlane['color'])
+                        
+                        # Add text annotation with smart positioning
+                        fig.add_annotation(
+                            x=event['time'],
+                            y=event['y_position'],
+                            text=event['wrapped_text'],
+                            textangle=event['angle'],
+                            showarrow=True,
+                            arrowhead=2,
+                            arrowsize=1,
+                            arrowwidth=1,
+                            arrowcolor=color,
+                            ax=event['arrow_x'],
+                            ay=event['arrow_y'],
+                            font=dict(size=event['font_size'], color=color),
+                            xref=f"x{i}",
+                            yref=f"y{i}",
+                            xanchor="left",
+                            yanchor="bottom",
+                            bgcolor="rgba(0,0,0,0.7)",
+                            bordercolor=color,
+                            borderwidth=1,
+                            borderpad=2
+                        )
+                        
+                elif events_data:  # Quarter/Year views - show hoverable markers
+                    for event in events_data:
+                        # Color based on severity
+                        severity_colors = {
+                            'info': swimlane['color'],
+                            'warning': '#FFA500',
+                            'error': '#FF4444',
+                            'critical': '#CC0000'
+                        }
+                        color = severity_colors.get(event['severity'], swimlane['color'])
+                        
+                        # Add scatter marker with hover text
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[event['time']],
+                                y=[0.5],  # Center of swimlane
+                                mode='markers',
+                                marker=dict(
+                                    size=10,
+                                    color=color,
+                                    symbol='diamond',
+                                    line=dict(width=2, color='white')
+                                ),
+                                hovertemplate=f'<b>{event["text"]}</b><br>Severity: {event["severity"]}<br>Time: %{{x}}<extra></extra>',
+                                showlegend=False,
+                                name=""
+                            ),
+                            row=i, col=1
+                        )
+                
+                max_count = 1  # Set to 1 for proper scaling
+                
+            else:
+                # Handle regular measurement swimlanes (counts)
+                swimlane_counts_by_date = {date: 0 for date in all_dates}
+                
+                for stream_type in swimlane['streams']:
+                    stream_counts = daily_counts[daily_counts['stream_type'] == stream_type]
+                    for _, row in stream_counts.iterrows():
+                        if row['date'] in swimlane_counts_by_date:
+                            swimlane_counts_by_date[row['date']] += row['count']
+                
+                dates = [pd.Timestamp(date) + pd.Timedelta(hours=12) for date in all_dates]
+                counts = [swimlane_counts_by_date[date] for date in all_dates]
+                max_count = max(counts) if counts else 0
+                
+                show_text = zoom_level in ['Week', 'Month']
+                text_values = None
+                if show_text:
+                    text_values = [str(count) if count > 0 else '' for count in counts]
+                
+                fig.add_trace(
+                    go.Bar(
+                        x=dates,
+                        y=counts,
+                        name=swimlane['name'],
+                        marker_color=swimlane['color'],
+                        opacity=0.8,
+                        text=text_values,
+                        textposition="outside" if show_text else None,
+                        textfont=dict(color="white", size=9) if show_text else None,
+                        hovertemplate=f'<b>{swimlane["name"]}</b><br>Date: %{{x}}<br>Count: %{{y}}<br>Project: {project_id}<extra></extra>',
+                        showlegend=False
+                    ),
+                    row=i, col=1
+                )
             
             fig.update_yaxes(
                 showticklabels=False, 
